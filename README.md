@@ -43,8 +43,10 @@ A minimal desktop app (Tkinter) that reads **SIYI ZR10** gimbal angles over UDP,
 ### 1) Create & activate venv
 ```bash
 python -m venv .venv
+
 # Windows
 .venv\Scripts\activate
+
 # Linux/macOS
 source .venv/bin/activate
 ```
@@ -62,7 +64,7 @@ sudo apt update && sudo apt install -y python3-tk
 
 ### 4) Run the app
 ```bash
-python gimbal_gps_ui_fixed.py
+python gimbal_gps_ui.py
 ```
 
 ---
