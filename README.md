@@ -55,7 +55,7 @@ sudo apt update && sudo apt install -y python3-tk
 4️⃣ Run the application
 bash
 Copy code
-python gimbal_gps_ui_fixed.py
+python gimbal_gps_ui.py
 ⚙️ Configuration
 Default parameters are defined in the Config class:
 
