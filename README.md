@@ -48,3 +48,13 @@ python -m venv .venv
 .venv\Scripts\activate
 # Linux/macOS
 source .venv/bin/activate
+
+Install requirements
+pip install -r requirements.txt
+(Linux/WSL only) Ensure Tk is present
+sudo apt update && sudo apt install -y python3-tk
+
+WSL GUI: use Windows 11 WSLg or an X server (GWSL/X410/VcXsrv) before running the app.
+
+4) Run the app
+python gimbal_gps_ui_fixed.py
