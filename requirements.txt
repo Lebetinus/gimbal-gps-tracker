@@ -1,0 +1,5 @@
+
+pymavlink>=2.4.40
+
+For Linux/WSL:
+sudo apt install python3-tk
