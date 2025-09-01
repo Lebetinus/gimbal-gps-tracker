@@ -1,4 +1,3 @@
-Düzeltilmiş README.md (tam içerik)
 # 🎯 Gimbal GPS Tracker (SIYI ZR10 → PX4 / QGroundControl)
 
 **Purpose:**  
