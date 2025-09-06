@@ -188,7 +188,7 @@ sudo apt install python3-tk
 - ✅ **Settings dialog** with quick profile switching
 
 ### Migration Notes
-If upgrading from v1.x, your settings will be migrated to `gimbal_gps_settings.json` automatically.
+If upgrading from v1.0, your settings will be migrated to `gimbal_gps_settings.json` automatically.
 
 ## 🛠️ Development
 
