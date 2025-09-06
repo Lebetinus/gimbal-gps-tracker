@@ -1,153 +1,221 @@
 # Gimbal GPS Tracker (SIYI ZR10 → PX4/QGC)
 
-A minimal desktop app (Tkinter) that reads **SIYI ZR10** gimbal angles over UDP, fuses them with **PX4** telemetry (MAVLink), computes the camera **ground intersection / target point**, and can:
+A desktop application (Tkinter) that reads **SIYI ZR10** gimbal angles over UDP, fuses them with **PX4** telemetry (MAVLink), computes the camera ground intersection/target point, and provides:
 
-- publish the target as **SBS/ADSB (TCP/30003)** for **QGroundControl** to visualize, and
-- drive **dynamic loiter tracking** by periodically **DO_REPOSITION** to keep the aircraft circling the viewed point.
+- **SBS/ADSB** publishing (TCP/30003) for QGroundControl visualization
+- **Dynamic loiter tracking** by periodically repositioning aircraft to circle the viewed point
+- **Persistent settings** with JSON configuration and profile presets
+- **Dual MAVLink links** (RX/TX) for robust QGC forwarding scenarios
 
-> Core file: `gimbal_gps_ui.py`
+## 🎯 Core Features
 
----
+- **SIYI ZR10** UDP protocol (attitude/config, center, jog) with stream keepalive
+- **Mount-aware** angle correction (Normal/UpsideDown)
+- **Robust MAVLink** client with auto-reconnect and dual RX/TX links
+- **Target calculation** from yaw/pitch + AGL with ground intersection math
+- **Sky/horizon fallback** (fixed distance projection when pointing up)
+- **SBS/ADSB publisher** for QGC target display
+- **Dynamic Loiter Tracker** with configurable radius/interval/movement thresholds
+- **Settings persistence** in JSON with profile presets (SITL/Operation/Custom)
+- **Clean Tkinter GUI** with embedded controls and settings dialog
 
-## ✨ Features
-- **SIYI ZR10** UDP protocol (attitude/config, center, jog)
-- **Mount-aware** angle correction (Normal / UpsideDown)
-- Robust **MAVLink** client (auto-reconnect) for PX4
-- Target **ground-intersection** math from yaw/pitch + AGL
-- Optional sky/horizon fallback (fixed distance projection)
-- **SBS/ADSB** publisher (TCP 30003) for QGC display
-- **Dynamic Loiter Tracker** (radius / update interval / min movement)
-- Clean **Tkinter GUI** with manual jog window
+## 📋 Requirements
 
----
+### Software
+- **Python 3.10+**
+- **OS**: Windows 10/11, Linux (including WSL with X server for GUI)
 
-## 📦 Requirements
-- Python **3.10+**
-- OS: Windows 10/11, Linux (incl. WSL – needs X server for GUI)
-- Dependencies (pip):
-  - `pymavlink`
-
-> **Tkinter** ships with most Python builds on Windows/macOS. On Debian/Ubuntu install via `sudo apt install python3-tk`.
-
----
-
-## 🔌 External Systems
-- **SIYI ZR10** reachable at `192.168.144.25:37260` (default in code)
-- **PX4 / MAVLink** accessible at `udp:127.0.0.1:14540` (default in code) — e.g. via MAVLink Router or QGC forwarding
-- **QGroundControl** can connect to SBS at `TCP 30003` (this app listens for a client; QGC should connect)
-
----
-
-## 🚀 Quick Start
-
-### 1) Create & activate venv
+### Dependencies
 ```bash
+pip install pymavlink
+```
+
+**Tkinter** ships with most Python builds on Windows/macOS. On Debian/Ubuntu:
+```bash
+sudo apt install python3-tk
+```
+
+### Hardware/Network
+- **SIYI ZR10** reachable at `192.168.144.25:37260` (configurable)
+- **PX4/MAVLink** accessible (e.g., via MAVLink Router or QGC forwarding)
+- **QGroundControl** can connect to SBS at TCP port 30003
+
+## 🚀 Installation & Setup
+
+### 1. Clone and Setup Environment
+```bash
+git clone https://github.com/Lebetinus/gimbal-gps-tracker.git
+cd gimbal-gps-tracker
 python -m venv .venv
 
 # Windows
 .venv\Scripts\activate
-
-# Linux/macOS
+# Linux/macOS  
 source .venv/bin/activate
+
+pip install pymavlink
 ```
 
-### 2) Install requirements
-```bash
-pip install -r requirements.txt
-```
-
-### 3) (Linux/WSL only) Ensure Tk is present
+### 2. Linux/WSL GUI Setup
 ```bash
 sudo apt update && sudo apt install -y python3-tk
 ```
-> **WSL GUI**: use Windows 11 WSLg or an X server (GWSL/X410/VcXsrv) before running the app.
+**WSL GUI**: Use Windows 11 WSLg or an X server (GWSL/X410/VcXsrv)
 
-### 4) Run the app
+### 3. Run Application
 ```bash
 python gimbal_gps_ui.py
 ```
 
----
+**Or use provided launchers:**
+- Windows: `start_gimbal.cmd`
+- Linux/WSL: `start_gimbal.sh`
 
 ## ⚙️ Configuration
-Defaults live in class `Config` inside the main file. Adjust and re-run.
 
-```python
-class Config:
-    SIYI_IP = "192.168.144.25"
-    SIYI_PORT = 37260
-    SBS_PORT = 30003
-    MAVLINK_ADDRESS = 'udp:127.0.0.1:14540'
+Settings are automatically saved to `gimbal_gps_settings.json`. Access via **Application → Settings** menu.
 
-    GUI_UPDATE_MS = 50
-    SBS_UPDATE_S = 0.2
-    ATTITUDE_REQUEST_MS = 100
-    TRACKING_UPDATE_S = 1.0
+### Profile Presets
 
-    DEFAULT_LOITER_RADIUS = 500.0
-    MIN_MOVEMENT_THRESHOLD = 10.0
-    MAX_DISTANCE_KM = 5.0
+| Profile | RX Link | TX Link | Use Case |
+|---------|---------|---------|----------|
+| **SITL/WSL** | `udpin:127.0.0.1:14540` | `udpout:127.0.0.1:14550` | QGC forwarding setup |
+| **Operation** | `udpin:0.0.0.0:14540` | *(same link)* | Field operations |
+| **Custom** | *(user defined)* | *(user defined)* | Manual configuration |
 
-    CALC_THROTTLE_S = 0.1
-    ANGLE_CHANGE_THRESHOLD = 0.5
+### Key Settings
+```json
+{
+  "SIYI_IP": "192.168.144.25",
+  "SIYI_PORT": 37260,
+  "SBS_BIND": "0.0.0.0", 
+  "SBS_PORT": 30003,
+  "MAVLINK_ADDRESS": "udpin:127.0.0.1:14540",
+  "MAVLINK_TX_ADDRESS": "udpout:127.0.0.1:14550"
+}
 ```
 
-**Notes**
-- `MAVLINK_ADDRESS`: point to your PX4 link (e.g., `udp:0.0.0.0:14540`, `tcp:127.0.0.1:5760`, etc.)
-- `SBS_PORT`: leave at `30003` and let **QGC** connect to this app
-- `MAX_DISTANCE_KM`: cap for sky/horizon projection
+**Notes:**
+- `MAVLINK_ADDRESS`: RX link for telemetry listening
+- `MAVLINK_TX_ADDRESS`: TX link for commands (empty = use RX link)
+- `SBS_PORT`: Leave at 30003 for QGC compatibility
+- `MAX_DISTANCE_KM`: Sky/horizon projection limit
 
----
+## 🎮 User Interface
 
-## 🖥️ GUI Overview
-- **MAVLink Status**: connection + live lat/lon/AGL/heading
-- **SIYI Panel**: connect, mount/mode, jog (press & hold), center
-- **Target Calculation**: live target lat/lon + distance + note (Ground / Sky/Horizon)
-- **Dynamic Loiter**: sliders for **Radius**, **Update Interval**, **Min Movement**; Start/Stop; Single **GoTo**; **Return to Mission**
-- **System Controls**: calc rate Hz, **SBS publisher** toggle
-- **Manual Control Window**: separate jog with speed
+### Main Panels
+1. **MAVLink Status**: Connection status + live position/heading
+2. **SIYI Gimbal**: Connect, mount info, embedded jog controls, center
+3. **Target Calculation**: Live target coordinates + distance + calculation notes
+4. **Dynamic Loiter**: Radius/interval/movement sliders, tracking controls
+5. **System Controls**: Calculation rate, SBS publisher toggle
 
----
+### Control Features
+- **Embedded Jog**: Press & hold directional buttons with speed slider
+- **Center**: Reset gimbal to center position
+- **Dynamic Tracking**: Auto-reposition aircraft to follow target
+- **Single GoTo**: One-time loiter at current target
+- **Return to Mission**: Switch back to mission mode
 
-## 🧠 How It Works (Architecture)
-- `SiyiGimbal`: builds/pars\-es SIYI UDP frames, tracks yaw/pitch/roll, mount/mode; exposes `get_corrected_angles(aircraft_heading)`
-- `MAVLinkHandler`: PX4 link, `GLOBAL_POSITION_INT` & `ATTITUDE`, helpers for `DO_REPOSITION`, `Auto/Loiter` mode
-- `TargetCalculator`: converts yaw/pitch + AGL + heading → NED ray → ground intersection (geodesic to lat/lon)
-- `SBSPublisher`: minimalist SBS/ADSB line emitter for QGC (`MSG,1` + `MSG,3`)
-- `DynamicTracker`: periodically compares last loiter center with new target; repositions if moved sufficiently
-- `GimbalGPSApp`: Tk GUI glue; timers, workers, and display updates
+## 🔧 Architecture
 
----
+### Core Classes
+- **`SiyiGimbal`**: UDP protocol handler with stream keepalive and angle correction
+- **`MAVLinkHandler`**: Dual RX/TX links with auto-reconnect for PX4 communication  
+- **`TargetCalculator`**: Ground intersection math from gimbal angles + AGL
+- **`SBSPublisher`**: Minimal SBS/ADSB emitter for QGC visualization
+- **`DynamicTracker`**: Periodic reposition logic with movement thresholds
+- **`SettingsStore`**: JSON persistence with profile management
+- **`GimbalGPSApp`**: Tkinter GUI coordinator
 
-## 🧭 QGroundControl Setup (SBS)
-1. Start this app and **enable** *SBS Publisher* (port 30003)
-2. In QGC, add a **TCP** link to **127.0.0.1:30003** (or the host IP)
-3. When the gimbal points to ground, you should see a target track/point
+### Data Flow
+1. **MAVLink** → Aircraft position/attitude
+2. **SIYI UDP** → Raw gimbal angles  
+3. **Angle Fusion** → Corrected world angles
+4. **Ray Casting** → Ground intersection target
+5. **SBS Output** → QGC visualization
+6. **Tracking Logic** → Aircraft repositioning
 
-> If QGC requires a restart or re-toggle to see SBS, disable/enable the link in QGC once.
+## 🔗 QGroundControl Integration
 
----
+### Setup Steps
+1. Start this app and enable **SBS Publisher** (port 30003)
+2. In QGC, add a **TCP link** to `127.0.0.1:30003` (or host IP)
+3. When gimbal points to ground, target appears as aircraft track
 
-## 🛠️ Troubleshooting
-- **Tkinter error / no window (WSL/Linux)**: Install `python3-tk`, ensure a GUI/X server is active.
-- **SBS shows nothing in QGC**: Make sure QGC is the **client** connecting to this app (server). Firewalls can block TCP/30003.
-- **No target computed**: The app needs **AGL** (relative altitude) and a **downward** pitch (> 0° in this convention). Above horizon → horizon/sky projection only.
-- **Loiter stays in place**: Ensure PX4 accepts `DO_REPOSITION` and you’re in a compatible mode. Radius is set via `NAV_LOITER_RAD` param.
-- **SIYI mount inverted**: Toggle the hardware mount direction or ensure the app reads `UpsideDown` and auto-corrects.
+**Troubleshooting:**
+- If QGC doesn't show SBS data, disable/enable the TCP link once
+- Ensure QGC connects as **client** to this app (server)
+- Check firewall settings for TCP/30003
 
----
+## 🐛 Troubleshooting
 
-## 🧪 Developer Tips
-- Run from VS Code; set up a Python debug config
-- For simulation: forward SITL MAVLink to `udp:127.0.0.1:14540`
-- Log SBS/TCP with `nc` to verify emitted lines
+### Common Issues
 
----
+**No GUI Window (Linux/WSL)**
+```bash
+sudo apt install python3-tk
+# Ensure X server is running (WSLg or GWSL/X410/VcXsrv)
+```
+
+**SBS Not Visible in QGC**
+- Verify QGC connects as TCP client to this app
+- Check firewall blocking TCP/30003
+- Try disable/enable QGC TCP link
+
+**No Target Computed**
+- Requires AGL (relative altitude) > 0
+- Gimbal must point downward (pitch > 0°)
+- Above horizon → sky projection only
+
+**Loiter Not Working**
+- Ensure PX4 accepts `DO_REPOSITION` commands
+- Check compatible flight mode
+- Verify `NAV_LOITER_RAD` parameter
+
+**SIYI Connection Issues**
+- Verify gimbal IP/port in settings
+- Check network connectivity to `192.168.144.25:37260`
+- Mount direction affects angle correction
+
+## 🔄 Recent Updates (v2.0)
+
+### Major Changes
+- ✅ **Dual MAVLink support** (separate RX/TX links)
+- ✅ **Persistent JSON settings** with profile presets  
+- ✅ **Stream keepalive hardening** for SIYI reliability
+- ✅ **Embedded UI controls** for compact layout
+- ✅ **Settings dialog** with quick profile switching
+
+### Migration Notes
+If upgrading from v1.x, your settings will be migrated to `gimbal_gps_settings.json` automatically.
+
+## 🛠️ Development
+
+### Debug Setup
+- Run from VS Code with Python debug configuration
+- For SITL: Forward MAVLink to `udp:127.0.0.1:14540`
+- Log SBS output: `nc 127.0.0.1 30003`
+
+### Code Structure
+```
+gimbal_gps_ui.py          # Main application
+gimbal_gps_settings.json  # Runtime settings (auto-created)
+start_gimbal.cmd          # Windows launcher
+start_gimbal.sh           # Linux launcher  
+```
 
 ## 📄 License
-This project is released under the **MIT License**. See `LICENSE`.
+
+This project is released under the **MIT License**. See `LICENSE` file for details.
+
+## 🤝 Contributing
+
+Issues and pull requests welcome! Please ensure:
+- Python 3.10+ compatibility
+- Cross-platform support (Windows/Linux)
+- Documentation updates for new features
 
 ---
 
-
-
+**Happy Tracking! 🎯✈️**
