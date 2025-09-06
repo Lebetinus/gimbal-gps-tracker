@@ -178,7 +178,7 @@ sudo apt install python3-tk
 - Check network connectivity to `192.168.144.25:37260`
 - Mount direction affects angle correction
 
-## 🔄 Recent Updates (v2.0)
+## 🔄 Recent Updates (v1.1)
 
 ### Major Changes
 - ✅ **Dual MAVLink support** (separate RX/TX links)
