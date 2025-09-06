@@ -155,7 +155,6 @@ Settings are automatically saved to `gimbal_gps_settings.json`. Access via **App
 **No GUI Window (Linux/WSL)**
 ```bash
 sudo apt install python3-tk
-# Ensure X server is running (WSLg or GWSL/X410/VcXsrv)
 ```
 
 **SBS Not Visible in QGC**
